@@ -84,19 +84,19 @@ export default function NewCandidatePage({
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="cv_text" className="text-sm font-medium text-gray-700">
-                Currículum (texto) <span className="text-danger">*</span>
+              <label htmlFor="cv_pdf" className="text-sm font-medium text-gray-700">
+                Currículum (PDF) <span className="text-danger">*</span>
               </label>
-              <textarea
-                id="cv_text"
-                name="cv_text"
+              <input
+                id="cv_pdf"
+                name="cv_pdf"
+                type="file"
+                accept=".pdf"
                 required
-                rows={10}
-                placeholder="Pega aquí el texto completo del CV del candidato..."
-                className="resize-y rounded-lg border border-gray-300 px-3 py-2.5 text-sm placeholder-gray-400 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:file:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
               <p className="text-xs text-gray-400">
-                Copia y pega el contenido del CV en texto plano. La IA lo analizará automáticamente.
+                Sube el CV en formato PDF. La IA extraerá el texto y lo analizará automáticamente.
               </p>
             </div>
 

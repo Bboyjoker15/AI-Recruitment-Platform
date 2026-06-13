@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 type AIAnalysisResult = {
   summary: string;
@@ -135,10 +136,10 @@ export async function analyzeCandidate(
   try {
     const name = formData.get("name") as string;
     const email = formData.get("email") as string;
-    const cvText = formData.get("cv_text") as string;
+    const cvPdf = formData.get("cv_pdf") as File | null;
     const jobId = formData.get("job_id") as string;
 
-    if (!name || !email || !cvText || !jobId) {
+    if (!name || !email || !cvPdf || !jobId) {
       return { error: "Todos los campos son obligatorios." };
     }
 
@@ -146,8 +147,31 @@ export async function analyzeCandidate(
       return { error: "El email no tiene un formato válido." };
     }
 
-    if (cvText.trim().length < 50) {
-      return { error: "El texto del CV es demasiado corto (mín. 50 caracteres)." };
+    if (cvPdf.size === 0) {
+      return { error: "El archivo PDF está vacío." };
+    }
+
+    if (cvPdf.size > 10 * 1024 * 1024) {
+      return { error: "El archivo PDF es demasiado grande (máx. 10 MB)." };
+    }
+
+    let cvText: string;
+    try {
+      const host = (await headers()).get("host") ?? "localhost:3000";
+      const protocol = host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https";
+      const pdfFormData = new FormData();
+      pdfFormData.set("file", cvPdf);
+      const parseRes = await fetch(`${protocol}://${host}/api/parse-pdf`, {
+        method: "POST",
+        body: pdfFormData,
+      });
+      const parseResult = await parseRes.json();
+      if (!parseRes.ok) {
+        return { error: parseResult.error ?? "Error al procesar el PDF." };
+      }
+      cvText = parseResult.text;
+    } catch {
+      return { error: "No se pudo extraer el texto del PDF. Asegúrate de que sea un archivo PDF válido." };
     }
 
     const supabase = await createClient();
