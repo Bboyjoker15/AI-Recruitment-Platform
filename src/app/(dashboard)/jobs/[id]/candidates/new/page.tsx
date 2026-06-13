@@ -37,6 +37,10 @@ export default function NewCandidatePage({
     try {
       const buffer = await file.arrayBuffer();
       const pdfjs = await import("pdfjs-dist");
+
+      pdfjs.GlobalWorkerOptions.workerSrc =
+        "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.296/build/pdf.worker.min.mjs";
+
       const uint8 = new Uint8Array(buffer);
 
       const doc = await pdfjs.getDocument({ data: uint8 }).promise;
@@ -64,7 +68,8 @@ export default function NewCandidatePage({
       } else {
         setCvText(text);
       }
-    } catch {
+    } catch (err) {
+      console.error("Error extrayendo PDF:", err);
       setState({
         error: "No se pudo extraer el texto del PDF. Asegúrate de que sea un archivo PDF válido.",
       });
