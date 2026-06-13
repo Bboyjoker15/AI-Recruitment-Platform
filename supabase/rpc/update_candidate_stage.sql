@@ -16,7 +16,7 @@ LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = ''
 AS $$
 DECLARE
-  v_webhook_url TEXT := 'TU_TUNNEL_URL/webhook/candidate-stage';
+  v_webhook_url TEXT := 'https://penalties-swim-transparent-breath.trycloudflare.com/webhook/candidate-stage';
   v_candidate_name TEXT;
   v_job_title TEXT;
 BEGIN

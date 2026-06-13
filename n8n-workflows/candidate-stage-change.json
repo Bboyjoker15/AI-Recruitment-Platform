@@ -1,0 +1,119 @@
+{
+  "name": "Candidate Stage Change",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "candidate-stage",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.new_status }}",
+              "operation": "notEqual",
+              "value2": "hired"
+            }
+          ]
+        }
+      },
+      "id": "if_not_hired",
+      "name": "¿No es contratado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.new_status }}",
+              "operation": "equal",
+              "value2": "hired"
+            }
+          ]
+        }
+      },
+      "id": "if_hired",
+      "name": "¿Es contratado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [450, 500]
+    },
+    {
+      "parameters": {
+        "fromEmail": "onboarding@ai-recruitment.com",
+        "toEmail": "={{ $json.candidate_email || '' }}",
+        "subject": "={{ 'Actualización: ' + $json.candidate_name + ' - ' + $json.job_title }}",
+        "text": "={{ 'Hola ' + $json.candidate_name + ',\n\nTu estado en el proceso para ' + $json.job_title + ' ha cambiado a: ' + $json.new_status + '\n\nEtapas del proceso:\n- Nuevo\n- En revisión\n- Entrevista\n- Prueba técnica\n- Oferta\n- Contratado\n- Rechazado\n\nGracias por tu interés.\n\nSaludos,\nEquipo de Reclutamiento' }}"
+      },
+      "id": "email_candidate",
+      "name": "Email al candidato",
+      "type": "n8n-nodes-base.resend",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "notificaciones@ai-recruitment.com",
+        "toEmail": "={{ $json.recruiter_email || 'reclutador@empresa.com' }}",
+        "subject": "={{ '¡Contratado! ' + $json.candidate_name + ' - ' + $json.job_title }}",
+        "text": "={{ 'El candidato ' + $json.candidate_name + ' ha sido contratado para ' + $json.job_title + '.\n\nRevisa los detalles en la plataforma.' }}"
+      },
+      "id": "email_recruiter",
+      "name": "Email al reclutador",
+      "type": "n8n-nodes-base.resend",
+      "typeVersion": 1,
+      "position": [650, 500]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "¿No es contratado?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "¿Es contratado?",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "¿No es contratado?": {
+      "main": [
+        [
+          {
+            "node": "Email al candidato",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Es contratado?": {
+      "main": [
+        [
+          {
+            "node": "Email al reclutador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
