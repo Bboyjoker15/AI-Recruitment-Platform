@@ -57,7 +57,7 @@ export interface Database {
           email: string;
           cv_url: string | null;
           raw_cv_data: Json | null;
-          status: "new" | "reviewing" | "interviewed" | "accepted" | "rejected";
+          status: "new" | "screening" | "interview" | "technical_test" | "offer" | "hired" | "rejected";
           created_at: string;
         };
         Insert: {
@@ -67,7 +67,7 @@ export interface Database {
           email: string;
           cv_url?: string | null;
           raw_cv_data?: Json | null;
-          status?: "new" | "reviewing" | "interviewed" | "accepted" | "rejected";
+          status?: "new" | "screening" | "interview" | "technical_test" | "offer" | "hired" | "rejected";
           created_at?: string;
         };
         Update: {
@@ -77,7 +77,7 @@ export interface Database {
           email?: string;
           cv_url?: string | null;
           raw_cv_data?: Json | null;
-          status?: "new" | "reviewing" | "interviewed" | "accepted" | "rejected";
+          status?: "new" | "screening" | "interview" | "technical_test" | "offer" | "hired" | "rejected";
           created_at?: string;
         };
       };
@@ -85,25 +85,25 @@ export interface Database {
         Row: {
           id: string;
           candidate_id: string;
-          scheduled_at: string;
+          interview_date: string;
           status: "scheduled" | "completed" | "cancelled";
-          feedback: string | null;
+          notes: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           candidate_id: string;
-          scheduled_at: string;
+          interview_date: string;
           status?: "scheduled" | "completed" | "cancelled";
-          feedback?: string | null;
+          notes?: string | null;
           created_at?: string;
         };
         Update: {
           id?: string;
           candidate_id?: string;
-          scheduled_at?: string;
+          interview_date?: string;
           status?: "scheduled" | "completed" | "cancelled";
-          feedback?: string | null;
+          notes?: string | null;
           created_at?: string;
         };
       };
@@ -116,6 +116,7 @@ export interface Database {
           suggestions: Json;
           risk_level: "low" | "medium" | "high";
           score: number;
+          suggested_next_step: string | null;
           created_at: string;
         };
         Insert: {
@@ -126,6 +127,7 @@ export interface Database {
           suggestions?: Json;
           risk_level: "low" | "medium" | "high";
           score: number;
+          suggested_next_step?: string | null;
           created_at?: string;
         };
         Update: {
@@ -136,6 +138,39 @@ export interface Database {
           suggestions?: Json;
           risk_level?: "low" | "medium" | "high";
           score?: number;
+          suggested_next_step?: string | null;
+          created_at?: string;
+        };
+      };
+      ai_logs: {
+        Row: {
+          id: string;
+          event_type: string;
+          prompt: string;
+          response: string;
+          model_version: string;
+          tokens_used: number | null;
+          latency_ms: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          event_type: string;
+          prompt: string;
+          response: string;
+          model_version: string;
+          tokens_used?: number | null;
+          latency_ms?: number | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          event_type?: string;
+          prompt?: string;
+          response?: string;
+          model_version?: string;
+          tokens_used?: number | null;
+          latency_ms?: number | null;
           created_at?: string;
         };
       };

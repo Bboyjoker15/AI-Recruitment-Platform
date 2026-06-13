@@ -31,7 +31,8 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   const isAuthPage = pathname.startsWith("/login");
-  const isDashboard = pathname.startsWith("/jobs") ||
+  const isDashboard = pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/jobs") ||
     pathname.startsWith("/candidates") ||
     pathname.startsWith("/interviews");
   const isRoot = pathname === "/";

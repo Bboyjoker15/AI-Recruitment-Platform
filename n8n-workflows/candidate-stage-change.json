@@ -80,7 +80,7 @@
             },
             {
               "name": "text",
-              "value": "={{ 'Hola ' + $json.candidate_name + ',\n\nTu estado en el proceso para ' + $json.job_title + ' ha cambiado a: ' + $json.new_status + '.\n\nEtapas del proceso:\n- Nuevo\n- En revisión\n- Entrevista\n- Prueba técnica\n- Oferta\n- Contratado\n- Rechazado\n\nGracias por tu interés.\n\nSaludos,\nEquipo de Reclutamiento' }}"
+              "value": "={{ `Hola ${$json.candidate_name},\n\nTu estado en el proceso para ${$json.job_title} ha cambiado a: ${$json.new_status}.\n\nEtapas:\n- Nuevo\n- En revisión\n- Entrevista\n- Prueba técnica\n- Oferta\n- Contratado\n- Rechazado\n\nGracias por tu interés.\n\nSaludos,\nEquipo de Reclutamiento` }}"
             }
           ]
         },
@@ -123,7 +123,7 @@
             },
             {
               "name": "text",
-              "value": "={{ 'El candidato ' + $json.candidate_name + ' ha sido contratado para ' + $json.job_title + '.\n\nRevisa los detalles en la plataforma.' }}"
+              "value": "={{ `El candidato ${$json.candidate_name} ha sido contratado para ${$json.job_title}.\n\nRevisa los detalles en la plataforma.` }}"
             }
           ]
         },
