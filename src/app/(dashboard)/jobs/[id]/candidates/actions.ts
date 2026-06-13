@@ -9,6 +9,7 @@ type AIAnalysisResult = {
   suggestions: string[];
   risk_level: "low" | "medium" | "high";
   score: number;
+  suggested_next_step: string;
 };
 
 function parseAIScore(raw: string): AIAnalysisResult {
@@ -49,6 +50,9 @@ function parseAIScore(raw: string): AIAnalysisResult {
   if (typeof obj.score !== "number" || obj.score < 0 || obj.score > 100) {
     throw new Error("El campo 'score' debe ser un número entre 0 y 100.");
   }
+  if (typeof obj.suggested_next_step !== "string" || obj.suggested_next_step.trim().length === 0) {
+    throw new Error("El campo 'suggested_next_step' es obligatorio.");
+  }
 
   return obj as AIAnalysisResult;
 }
@@ -74,13 +78,15 @@ Analiza el CV en base a los requisitos del puesto y devuelve ÚNICAMENTE un obje
   "classification": "Categoría del perfil (ej: 'Senior Frontend', 'Junior Backend', 'Data Analyst', etc).",
   "suggestions": ["Sugerencia 1 para mejorar la postulación", "Sugerencia 2", "Sugerencia 3"],
   "risk_level": "low" | "medium" | "high",
-  "score": 85
+  "score": 85,
+  "suggested_next_step": "screening" | "interview" | "technical_test" | "offer" | "reject"
 }
 
 Reglas:
 - risk_level debe ser 'low' (bajo riesgo de contratación), 'medium' o 'high'.
 - score debe ser un número entero entre 0 y 100.
 - suggestions debe tener entre 1 y 5 sugerencias accionables.
+- suggested_next_step debe ser una de las siguientes etapas: 'screening' (revisión inicial), 'interview' (entrevista), 'technical_test' (prueba técnica), 'offer' (oferta), 'reject' (descartar). NO incluyas 'new' ni 'hired'.
 - NO incluyas texto adicional fuera del JSON.`;
 
   const apiKey = process.env.GROQ_API_KEY;
@@ -124,6 +130,7 @@ Reglas:
     ],
     risk_level: found ? "low" : "medium",
     score: found ? 87 : 62,
+    suggested_next_step: found ? "interview" : "screening",
   };
   return JSON.stringify(simulated);
 }
@@ -192,6 +199,7 @@ export async function analyzeCandidate(
       suggestions: analysis.suggestions,
       risk_level: analysis.risk_level,
       score: analysis.score,
+      suggested_next_step: analysis.suggested_next_step,
     });
 
     if (scoreError) {
@@ -202,6 +210,53 @@ export async function analyzeCandidate(
     return { success: true, candidateId: candidate.id };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error inesperado al procesar el candidato.";
+    return { error: message };
+  }
+}
+
+export async function updateCandidateStage(
+  candidateId: string,
+  newStatus: string
+): Promise<{ error?: string; success?: boolean }> {
+  try {
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      return { error: "No hay sesión activa." };
+    }
+
+    const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+    const response = await fetch(`${baseUrl}/rest/v1/rpc/update_candidate_stage`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: anonKey,
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        p_candidate_id: candidateId,
+        p_new_status: newStatus,
+      }),
+    });
+
+    if (!response.ok) {
+      let errorMessage = `Error del servidor (${response.status})`;
+      try {
+        const errorBody = await response.json();
+        if (errorBody.message) errorMessage = errorBody.message;
+      } catch {
+        errorMessage = await response.text();
+      }
+      return { error: errorMessage };
+    }
+
+    revalidatePath(`/candidates/${candidateId}`);
+    return { success: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Error inesperado al actualizar la etapa.";
     return { error: message };
   }
 }

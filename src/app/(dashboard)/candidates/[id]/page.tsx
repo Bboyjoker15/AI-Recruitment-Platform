@@ -2,20 +2,25 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { CVAnalysis } from "@/components/candidates/CVAnalysis";
+import { StageControls } from "@/components/candidates/StageControls";
 
 const statusBadge: Record<string, string> = {
   new: "bg-blue-50 text-blue-700 border-blue-200",
-  reviewing: "bg-yellow-50 text-yellow-700 border-yellow-200",
-  interviewed: "bg-gray-50 text-gray-700 border-gray-200",
-  accepted: "bg-green-50 text-green-700 border-green-200",
+  screening: "bg-blue-50 text-blue-700 border-blue-200",
+  interview: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  technical_test: "bg-purple-50 text-purple-700 border-purple-200",
+  offer: "bg-orange-50 text-orange-700 border-orange-200",
+  hired: "bg-green-50 text-green-700 border-green-200",
   rejected: "bg-red-50 text-red-700 border-red-200",
 };
 
 const statusLabels: Record<string, string> = {
   new: "Nuevo",
-  reviewing: "En revisión",
-  interviewed: "Entrevistado",
-  accepted: "Aceptado",
+  screening: "En revisión",
+  interview: "Entrevista",
+  technical_test: "Prueba técnica",
+  offer: "Oferta",
+  hired: "Contratado",
   rejected: "Rechazado",
 };
 
@@ -96,6 +101,13 @@ export default async function CandidateDetailPage({
           </p>
         </div>
       </div>
+
+      {/* Stage Controls */}
+      <StageControls
+        candidateId={id}
+        currentStage={candidate.status}
+        suggestedNextStep={score?.suggested_next_step ?? null}
+      />
 
       {/* AI Analysis */}
       {score ? (
