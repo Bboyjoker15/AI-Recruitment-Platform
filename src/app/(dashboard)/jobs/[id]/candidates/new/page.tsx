@@ -14,15 +14,81 @@ export default function NewCandidatePage({
   const router = useRouter();
   const [state, setState] = useState<{ error?: string; success?: boolean }>({});
   const [loading, setLoading] = useState(false);
+  const [extracting, setExtracting] = useState(false);
+  const [cvText, setCvText] = useState("");
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size === 0) {
+      setState({ error: "El archivo PDF está vacío." });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setState({ error: "El archivo PDF es demasiado grande (máx. 10 MB)." });
+      return;
+    }
+
+    setExtracting(true);
+    setState({});
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const pdfjs = await import("pdfjs-dist");
+      const uint8 = new Uint8Array(buffer);
+
+      const doc = await pdfjs.getDocument({ data: uint8 }).promise;
+      const pages: string[] = [];
+
+      for (let i = 1; i <= doc.numPages; i++) {
+        const page = await doc.getPage(i);
+        const content = await page.getTextContent();
+        pages.push(
+          content.items
+            .filter((item) => "str" in item)
+            .map((item) => (item as { str: string }).str)
+            .join(" ")
+        );
+      }
+
+      doc.destroy();
+      const text = pages.join("\n\n");
+
+      if (text.trim().length < 50) {
+        setState({
+          error: "El texto extraído del PDF es demasiado corto (mín. 50 caracteres). Asegúrate de que el PDF contenga texto seleccionable.",
+        });
+        setCvText("");
+      } else {
+        setCvText(text);
+      }
+    } catch {
+      setState({
+        error: "No se pudo extraer el texto del PDF. Asegúrate de que sea un archivo PDF válido.",
+      });
+      setCvText("");
+    } finally {
+      setExtracting(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (!cvText) {
+      setState({ error: "Debes seleccionar un PDF válido y esperar a que se extraiga el texto." });
+      return;
+    }
+
     setLoading(true);
     setState({});
 
     const form = e.currentTarget;
     const formData = new FormData(form);
     formData.set("job_id", id);
+    formData.set("cv_text", cvText);
 
     const result = await analyzeCandidate(state, formData);
     setState(result);
@@ -89,14 +155,19 @@ export default function NewCandidatePage({
               </label>
               <input
                 id="cv_pdf"
-                name="cv_pdf"
                 type="file"
                 accept=".pdf"
                 required
-                className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:file:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
+                disabled={extracting}
+                onChange={handleFileChange}
+                className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:file:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
               />
               <p className="text-xs text-gray-400">
-                Sube el CV en formato PDF. La IA extraerá el texto y lo analizará automáticamente.
+                {extracting
+                  ? "Extrayendo texto del PDF..."
+                  : cvText
+                    ? `✓ Texto extraído (${cvText.length} caracteres)`
+                    : "Sube el CV en formato PDF. El texto se extraerá en tu navegador."}
               </p>
             </div>
 
@@ -132,7 +203,7 @@ export default function NewCandidatePage({
           </button>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || extracting || !cvText}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-xs transition-all hover:bg-primary-dark disabled:cursor-not-allowed disabled:bg-primary/50 cursor-pointer"
           >
             {loading ? (
