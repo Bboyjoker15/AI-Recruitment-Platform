@@ -51,28 +51,88 @@
     },
     {
       "parameters": {
-        "fromEmail": "onboarding@ai-recruitment.com",
-        "toEmail": "={{ $json.candidate_email || '' }}",
-        "subject": "={{ 'Actualización: ' + $json.candidate_name + ' - ' + $json.job_title }}",
-        "text": "={{ 'Hola ' + $json.candidate_name + ',\n\nTu estado en el proceso para ' + $json.job_title + ' ha cambiado a: ' + $json.new_status + '\n\nEtapas del proceso:\n- Nuevo\n- En revisión\n- Entrevista\n- Prueba técnica\n- Oferta\n- Contratado\n- Rechazado\n\nGracias por tu interés.\n\nSaludos,\nEquipo de Reclutamiento' }}"
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer re_123456789"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "from",
+              "value": "onboarding@ai-recruitment.com"
+            },
+            {
+              "name": "to",
+              "value": "={{ $json.candidate_email || 'candidato@email.com' }}"
+            },
+            {
+              "name": "subject",
+              "value": "={{ 'Actualización: ' + $json.candidate_name + ' - ' + $json.job_title }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ 'Hola ' + $json.candidate_name + ',\n\nTu estado en el proceso para ' + $json.job_title + ' ha cambiado a: ' + $json.new_status + '.\n\nEtapas del proceso:\n- Nuevo\n- En revisión\n- Entrevista\n- Prueba técnica\n- Oferta\n- Contratado\n- Rechazado\n\nGracias por tu interés.\n\nSaludos,\nEquipo de Reclutamiento' }}"
+            }
+          ]
+        },
+        "options": {}
       },
-      "id": "email_candidate",
-      "name": "Email al candidato",
-      "type": "n8n-nodes-base.resend",
-      "typeVersion": 1,
+      "id": "http_candidate_email",
+      "name": "HTTP Request - Email candidato",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [650, 300]
     },
     {
       "parameters": {
-        "fromEmail": "notificaciones@ai-recruitment.com",
-        "toEmail": "={{ $json.recruiter_email || 'reclutador@empresa.com' }}",
-        "subject": "={{ '¡Contratado! ' + $json.candidate_name + ' - ' + $json.job_title }}",
-        "text": "={{ 'El candidato ' + $json.candidate_name + ' ha sido contratado para ' + $json.job_title + '.\n\nRevisa los detalles en la plataforma.' }}"
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer re_123456789"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "from",
+              "value": "notificaciones@ai-recruitment.com"
+            },
+            {
+              "name": "to",
+              "value": "reclutador@empresa.com"
+            },
+            {
+              "name": "subject",
+              "value": "={{ '¡Contratado! ' + $json.candidate_name + ' - ' + $json.job_title }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ 'El candidato ' + $json.candidate_name + ' ha sido contratado para ' + $json.job_title + '.\n\nRevisa los detalles en la plataforma.' }}"
+            }
+          ]
+        },
+        "options": {}
       },
-      "id": "email_recruiter",
-      "name": "Email al reclutador",
-      "type": "n8n-nodes-base.resend",
-      "typeVersion": 1,
+      "id": "http_recruiter_email",
+      "name": "HTTP Request - Email reclutador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [650, 500]
     }
   ],
@@ -97,7 +157,7 @@
       "main": [
         [
           {
-            "node": "Email al candidato",
+            "node": "HTTP Request - Email candidato",
             "type": "main",
             "index": 0
           }
@@ -108,7 +168,7 @@
       "main": [
         [
           {
-            "node": "Email al reclutador",
+            "node": "HTTP Request - Email reclutador",
             "type": "main",
             "index": 0
           }
