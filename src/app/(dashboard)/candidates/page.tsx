@@ -1,45 +1,29 @@
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardTitle } from "@/components/shared/ui/Card";
-
-const statusVariant: Record<string, "default" | "success" | "warning" | "danger" | "info"> = {
-  new: "info",
-  reviewing: "warning",
-  interviewed: "default",
-  accepted: "success",
-  rejected: "danger",
-};
+import { CandidatesBrowser } from "@/components/candidates/CandidatesBrowser";
 
 export default async function CandidatesPage() {
   const supabase = await createClient();
 
-  const { data: candidates } = await supabase
-    .from("candidates")
-    .select("*, jobs(title)")
-    .order("created_at", { ascending: false });
+  const [candidatesRes, scoresRes, jobsRes] = await Promise.all([
+    supabase
+      .from("candidates")
+      .select("*, jobs(title, id)")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("scores")
+      .select("candidate_id, score, classification, risk_level"),
+    supabase.from("jobs").select("id, title").order("title"),
+  ]);
 
-  return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">Candidates</h1>
+  const candidates = candidatesRes.data ?? [];
+  const scores = scoresRes.data ?? [];
+  const jobs = jobsRes.data ?? [];
 
-      <div className="grid gap-4">
-        {candidates?.map((candidate) => (
-          <Card key={candidate.id}>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>{candidate.name}</CardTitle>
-                <p className="text-sm text-gray-500">{candidate.email}</p>
-                <p className="text-xs text-gray-400">
-                  Job: {(candidate.jobs as { title: string })?.title ?? "—"}
-                </p>
-              </div>
-            </div>
-          </Card>
-        ))}
+  const scoreMap = new Map(scores.map((s) => [s.candidate_id, s]));
+  const candidatesWithScore = candidates.map((c) => ({
+    ...c,
+    score: scoreMap.get(c.id) ?? null,
+  }));
 
-        {(!candidates || candidates.length === 0) && (
-          <p className="text-center text-gray-400 py-12">No candidates yet.</p>
-        )}
-      </div>
-    </div>
-  );
+  return <CandidatesBrowser candidates={candidatesWithScore} jobs={jobs} />;
 }
