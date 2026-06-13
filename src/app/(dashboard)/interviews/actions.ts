@@ -71,3 +71,30 @@ export async function scheduleInterview(
     return { error: message };
   }
 }
+
+export async function updateInterview(
+  id: string,
+  data: { interview_date?: string; status?: string; notes?: string | null }
+) {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from("interviews").update(data).eq("id", id);
+    if (error) return { error: error.message };
+    revalidatePath("/interviews");
+    return { success: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Error al actualizar la entrevista" };
+  }
+}
+
+export async function deleteInterview(id: string) {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from("interviews").delete().eq("id", id);
+    if (error) return { error: error.message };
+    revalidatePath("/interviews");
+    return { success: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Error al eliminar la entrevista" };
+  }
+}

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { CandidateList, type CandidateWithScore } from "@/components/candidates/CandidateList";
 import { Badge } from "@/components/shared/ui/Badge";
+import { JobActions } from "@/components/jobs/JobActions";
 
 const statusVariant: Record<string, "default" | "success" | "warning" | "danger" | "info"> = {
   draft: "default",
@@ -71,8 +72,20 @@ export default async function JobDetailPage({
           Volver a mis vacantes
         </Link>
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-gray-900">{job.title}</h1>
+          <h1 className="truncate text-2xl font-bold text-gray-900">{job.title}</h1>
           <Badge variant={statusVariant[job.status]}>{statusLabels[job.status] ?? job.status}</Badge>
+        </div>
+        <div className="mt-3 flex items-center gap-2">
+          <Link
+            href={`/jobs/${id}/edit`}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+            </svg>
+            Editar
+          </Link>
+          <JobActions jobId={id} />
         </div>
         {job.description && (
           <p className="mt-2 text-gray-600">{job.description}</p>

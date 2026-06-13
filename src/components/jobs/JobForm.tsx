@@ -3,11 +3,21 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { updateJob } from "@/app/(dashboard)/jobs/actions";
 
-export function JobForm() {
+type JobData = {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+};
+
+export function JobForm({ initialData }: { initialData?: JobData }) {
   const router = useRouter();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const isEditing = !!initialData;
+  const [title, setTitle] = useState(initialData?.title ?? "");
+  const [description, setDescription] = useState(initialData?.description ?? "");
+  const [status, setStatus] = useState(initialData?.status ?? "draft");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,8 +26,23 @@ export function JobForm() {
     setLoading(true);
     setError(null);
 
-    const supabase = createClient();
+    if (isEditing) {
+      const result = await updateJob(initialData.id, {
+        title,
+        description: description || null,
+        status,
+      });
+      if (result.error) {
+        setError(result.error);
+        setLoading(false);
+        return;
+      }
+      router.push(`/jobs/${initialData.id}`);
+      router.refresh();
+      return;
+    }
 
+    const supabase = createClient();
     const {
       data: { user },
       error: userError,
@@ -82,16 +107,34 @@ export function JobForm() {
             </p>
           </div>
 
-          <div className="rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-700">
-            <div className="flex items-start gap-2">
-              <svg className="mt-0.5 h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-              </svg>
-              <span>
-                La vacante se creará en estado <strong>Borrador</strong>. Podrás publicarla después desde el detalle.
-              </span>
+          {isEditing && (
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="status" className="text-sm font-medium text-gray-700">Estado</label>
+              <select
+                id="status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                <option value="draft">Borrador</option>
+                <option value="published">Publicada</option>
+                <option value="closed">Cerrada</option>
+              </select>
             </div>
-          </div>
+          )}
+
+          {!isEditing && (
+            <div className="rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-700">
+              <div className="flex items-start gap-2">
+                <svg className="mt-0.5 h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                </svg>
+                <span>
+                  La vacante se creará en estado <strong>Borrador</strong>. Podrás publicarla después desde la edición.
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -107,7 +150,7 @@ export function JobForm() {
       <div className="flex items-center justify-end gap-3">
         <button
           type="button"
-          onClick={() => router.push("/jobs")}
+          onClick={() => router.push(isEditing ? `/jobs/${initialData.id}` : "/jobs")}
           className="rounded-lg px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 cursor-pointer"
         >
           Cancelar
@@ -123,16 +166,14 @@ export function JobForm() {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              Creando...
+              {isEditing ? "Guardando..." : "Creando..."}
             </>
           ) : (
-            <>
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-              Crear vacante
-            </>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
           )}
+          {isEditing ? "Guardar cambios" : "Crear vacante"}
         </button>
       </div>
     </form>

@@ -260,3 +260,30 @@ export async function updateCandidateStage(
     return { error: message };
   }
 }
+
+export async function updateCandidate(
+  id: string,
+  data: { name?: string; email?: string; status?: string }
+) {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from("candidates").update(data).eq("id", id);
+    if (error) return { error: error.message };
+    revalidatePath(`/candidates/${id}`);
+    return { success: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Error al actualizar el candidato" };
+  }
+}
+
+export async function deleteCandidate(id: string) {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from("candidates").delete().eq("id", id);
+    if (error) return { error: error.message };
+    revalidatePath("/jobs");
+    return { success: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Error al eliminar el candidato" };
+  }
+}
