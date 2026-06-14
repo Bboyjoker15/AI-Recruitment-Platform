@@ -58,7 +58,7 @@ export function StageControls({
             <button
               key={s.value}
               type="button"
-              disabled={moving || s.value === "new" || s.value === "hired"}
+              disabled={moving || s.value === "new" || s.value === stage}
               onClick={() => handleChange(s.value)}
               className={`rounded-full border px-3 py-1 text-xs font-medium transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 ${
                 stage === s.value
