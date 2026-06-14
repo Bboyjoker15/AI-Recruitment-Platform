@@ -15,89 +15,43 @@
     },
     {
       "parameters": {
-        "url": "https://api.resend.com/emails",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer re_Piz7ms7j_Ljkab7a82TtUcKi9afSvhTbe"
-            }
-          ]
-        },
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "from",
-              "value": "onboarding@ai-recruitment.com"
-            },
-            {
-              "name": "to",
-              "value": "={{ $json.candidate_email }}"
-            },
-            {
-              "name": "subject",
-              "value": "={{ 'Postulación recibida - ' + $json.job_title }}"
-            },
-            {
-              "name": "text",
-              "value": "={{ `Hola ${$json.candidate_name},\n\nHemos recibido tu postulación para la vacante de ${$json.job_title}.\n\nNuestro equipo de reclutamiento revisará tu perfil y te mantendremos informado sobre el avance de tu candidatura.\n\nPuntaje obtenido: ${$json.score}/100\nClasificación: ${$json.classification}\n\nGracias por tu interés.\n\nSaludos,\nEquipo de Reclutamiento` }}"
-            }
-          ]
-        },
-        "options": {}
+        "from": "onboarding@resend.dev",
+        "to": "cesarvelasquez150814@gmail.com",
+        "subject": "={{ 'Postulación recibida - ' + $json.body.job_title }}",
+        "html": "={{ `<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"utf-8\">\n<style>\nbody{margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#374151}\n.card{max-width:560px;margin:24px auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden}\n.header{background:#10b981;padding:24px;text-align:center}\n.header h1{color:#fff;margin:0;font-size:22px;font-weight:700}\n.body{padding:28px}\n.greeting{font-size:16px;color:#111827;margin:0 0 8px}\n.score-wrap{text-align:center;padding:24px 0}\n.score-circle{width:120px;height:120px;border-radius:50%;margin:12px auto;background:conic-gradient(#10b981 0% ${$json.body.score}%,#e5e7eb ${$json.body.score}% 100%);display:flex;align-items:center;justify-content:center}\n.score-inner{width:100px;height:100px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}\n.score-num{font-size:36px;font-weight:800;line-height:1}\n.score-total{font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px}\n.green{color:#059669}.yellow{color:#d97706}.red{color:#dc2626}\n.badge{display:inline-block;padding:4px 14px;border-radius:999px;font-size:12px;font-weight:600;margin:0 4px}\n.badge-blue{background:#eff6ff;color:#1d4ed8}\n.badge-green{background:#ecfdf5;color:#047857}\n.badge-yellow{background:#fefce8;color:#a16207}\n.badge-red{background:#fef2f2;color:#b91c1c}\n.divider{height:1px;background:#e5e7eb;margin:20px 0}\n.footer{text-align:center;font-size:12px;color:#9ca3af;padding:20px 28px;border-top:1px solid #e5e7eb}\n</style>\n</head>\n<body>\n<div class=\"card\">\n<div class=\"header\"><h1>Postulaci\u00f3n Recibida</h1></div>\n<div class=\"body\">\n<p class=\"greeting\">Hola ${$json.body.candidate_name},</p>\n<p style=\"color:#6b7280\">Hemos recibido tu postulaci\u00f3n para <strong style=\"color:#111827\">${$json.body.job_title}</strong>.</p>\n<div class=\"score-wrap\">\n<div class=\"score-circle\">\n<div class=\"score-inner\">\n<span class=\"score-num ${$json.body.score >= 75 ? 'green' : ($json.body.score >= 50 ? 'yellow' : 'red')}\">${$json.body.score}</span>\n<span class=\"score-total\">/ 100</span>\n</div>\n</div>\n</div>\n<div style=\"text-align:center;margin:16px 0\">\n<span class=\"badge badge-blue\">${$json.body.classification}</span>\n<span class=\"badge ${$json.body.risk_level === 'low' ? 'badge-green' : ($json.body.risk_level === 'medium' ? 'badge-yellow' : 'badge-red')}\">Riesgo ${$json.body.risk_level === 'low' ? 'Bajo' : ($json.body.risk_level === 'medium' ? 'Medio' : 'Alto')}</span>\n</div>\n<div class=\"divider\"></div>\n<p style=\"color:#6b7280\">Nuestro equipo de reclutamiento revisar\u00e1 tu perfil y te mantendremos informado sobre el avance de tu candidatura.</p>\n</div>\n<div class=\"footer\">Gracias por tu inter\u00e9s<br><strong>Equipo de Reclutamiento</strong></div>\n</div>\n</body>\n</html>` }}",
+        "additionalOptions": {}
       },
-      "id": "http_candidate_email",
-      "name": "HTTP Request - Email candidato",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [450, 300]
+      "id": "resend_candidate",
+      "name": "Email candidato",
+      "type": "n8n-nodes-resend.resend",
+      "typeVersion": 1,
+      "position": [550, 200],
+      "credentials": {
+        "resendApi": {
+          "id": "L0POHiGu8Vlq9mRz",
+          "name": "Resend account"
+        }
+      }
     },
     {
       "parameters": {
-        "url": "https://api.resend.com/emails",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer re_Piz7ms7j_Ljkab7a82TtUcKi9afSvhTbe"
-            }
-          ]
-        },
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "from",
-              "value": "notificaciones@ai-recruitment.com"
-            },
-            {
-              "name": "to",
-              "value": "reclutador@empresa.com"
-            },
-            {
-              "name": "subject",
-              "value": "={{ 'Nuevo candidato: ' + $json.candidate_name + ' - ' + $json.job_title }}"
-            },
-            {
-              "name": "text",
-              "value": "={{ `Se ha recibido una nueva postulación.\n\nCandidato: ${$json.candidate_name}\nEmail: ${$json.candidate_email}\nVacante: ${$json.job_title}\nPuntaje IA: ${$json.score}/100\nClasificación: ${$json.classification}\nRiesgo: ${$json.risk_level}\n\nRevisa los detalles en la plataforma.` }}"
-            }
-          ]
-        },
-        "options": {}
+        "from": "onboarding@resend.dev",
+        "to": "cesarvelasquez150814@gmail.com",
+        "subject": "={{ 'Nuevo candidato: ' + $json.body.candidate_name + ' - ' + $json.body.job_title }}",
+        "html": "={{ `<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"utf-8\">\n<style>\nbody{margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#374151}\n.card{max-width:560px;margin:24px auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden}\n.header{background:#10b981;padding:20px;text-align:center}\n.header h1{color:#fff;margin:0;font-size:20px;font-weight:700}\n.body{padding:24px}\n.field{display:flex;padding:8px 0;border-bottom:1px solid #f3f4f6}\n.flabel{width:120px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#9ca3af}\n.fval{flex:1;font-size:14px;color:#111827}\n.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:600}\n.badge-blue{background:#eff6ff;color:#1d4ed8}\n.badge-green{background:#ecfdf5;color:#047857}\n.badge-yellow{background:#fefce8;color:#a16207}\n.badge-red{background:#fef2f2;color:#b91c1c}\n.divider{height:1px;background:#e5e7eb;margin:16px 0}\n.footer{text-align:center;font-size:12px;color:#9ca3af;padding:16px 24px;border-top:1px solid #e5e7eb}\n</style>\n</head>\n<body>\n<div class=\"card\">\n<div class=\"header\"><h1>Nuevo Candidato</h1></div>\n<div class=\"body\">\n<p style=\"margin-top:0;color:#6b7280\">Se ha recibido una nueva postulaci\u00f3n.</p>\n<div class=\"field\"><span class=\"flabel\">Candidato</span><span class=\"fval\">${$json.body.candidate_name}</span></div>\n<div class=\"field\"><span class=\"flabel\">Email</span><span class=\"fval\">${$json.body.candidate_email}</span></div>\n<div class=\"field\"><span class=\"flabel\">Vacante</span><span class=\"fval\">${$json.body.job_title}</span></div>\n<div class=\"field\"><span class=\"flabel\">Score</span><span class=\"fval\" style=\"font-weight:700;color:${$json.body.score >= 75 ? '#059669' : ($json.body.score >= 50 ? '#d97706' : '#dc2626')}\">${$json.body.score}/100</span></div>\n<div class=\"field\"><span class=\"flabel\">Clasificaci\u00f3n</span><span class=\"fval\"><span class=\"badge badge-blue\">${$json.body.classification}</span></span></div>\n<div class=\"field\"><span class=\"flabel\">Riesgo</span><span class=\"fval\"><span class=\"badge ${$json.body.risk_level === 'low' ? 'badge-green' : ($json.body.risk_level === 'medium' ? 'badge-green' : 'badge-red')}\">${$json.body.risk_level === 'low' ? 'Bajo' : ($json.body.risk_level === 'medium' ? 'Medio' : 'Alto')}</span></span></div>\n<div class=\"divider\"></div>\n<p style=\"font-size:13px;color:#6b7280\">Revisa los detalles en la plataforma.</p>\n</div>\n<div class=\"footer\">Equipo de Reclutamiento</div>\n</div>\n</body>\n</html>` }}",
+        "additionalOptions": {}
       },
-      "id": "http_recruiter_email",
-      "name": "HTTP Request - Email reclutador",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [450, 450]
+      "id": "resend_recruiter",
+      "name": "Email reclutador",
+      "type": "n8n-nodes-resend.resend",
+      "typeVersion": 1,
+      "position": [550, 450],
+      "credentials": {
+        "resendApi": {
+          "id": "L0POHiGu8Vlq9mRz",
+          "name": "Resend account"
+        }
+      }
     }
   ],
   "connections": {
@@ -105,12 +59,12 @@
       "main": [
         [
           {
-            "node": "HTTP Request - Email candidato",
+            "node": "Email candidato",
             "type": "main",
             "index": 0
           },
           {
-            "node": "HTTP Request - Email reclutador",
+            "node": "Email reclutador",
             "type": "main",
             "index": 0
           }

@@ -5,6 +5,35 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { analyzeCandidate } from "../actions";
 
+const PDFJS_CDN = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379";
+
+let pdfjsPromise: Promise<{
+  version: string;
+  GlobalWorkerOptions: { workerSrc: string };
+  getDocument: (params: { data: Uint8Array }) => {
+    promise: Promise<{
+      numPages: number;
+      getPage: (n: number) => Promise<{
+        getTextContent: () => Promise<{ items: { str?: string }[] }>;
+      }>;
+      destroy: () => void;
+    }>;
+  };
+}> | null = null;
+
+async function loadPdfjs() {
+  if (!pdfjsPromise) {
+    pdfjsPromise = import(
+      /* webpackIgnore: true */
+      `${PDFJS_CDN}/pdf.min.mjs`
+    ).then((mod) => {
+      mod.GlobalWorkerOptions.workerSrc = `${PDFJS_CDN}/pdf.worker.min.mjs`;
+      return mod;
+    });
+  }
+  return pdfjsPromise;
+}
+
 export default function NewCandidatePage({
   params,
 }: {
@@ -36,11 +65,7 @@ export default function NewCandidatePage({
 
     try {
       const buffer = await file.arrayBuffer();
-      const pdfjs = await import("pdfjs-dist");
-
-      pdfjs.GlobalWorkerOptions.workerSrc =
-        "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.296/build/pdf.worker.min.mjs";
-
+      const pdfjs = await loadPdfjs();
       const uint8 = new Uint8Array(buffer);
 
       const doc = await pdfjs.getDocument({ data: uint8 }).promise;
