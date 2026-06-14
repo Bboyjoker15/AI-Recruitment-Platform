@@ -150,6 +150,8 @@ export interface Database {
           response: string;
           model_version: string;
           tokens_used: number | null;
+          prompt_tokens: number | null;
+          completion_tokens: number | null;
           latency_ms: number | null;
           created_at: string;
         };
@@ -160,6 +162,8 @@ export interface Database {
           response: string;
           model_version: string;
           tokens_used?: number | null;
+          prompt_tokens?: number | null;
+          completion_tokens?: number | null;
           latency_ms?: number | null;
           created_at?: string;
         };
@@ -170,6 +174,8 @@ export interface Database {
           response?: string;
           model_version?: string;
           tokens_used?: number | null;
+          prompt_tokens?: number | null;
+          completion_tokens?: number | null;
           latency_ms?: number | null;
           created_at?: string;
         };

@@ -62,6 +62,8 @@ async function callAIApi(cvText: string, jobDescription: string): Promise<{
   rawResponse: string;
   latencyMs: number | null;
   tokensUsed: number | null;
+  promptTokens: number | null;
+  completionTokens: number | null;
   prompt: string;
 }> {
   const prompt = `Eres un reclutador senior experto en análisis de currículums.
@@ -125,6 +127,8 @@ Reglas:
       rawResponse: JSON.stringify(data),
       latencyMs,
       tokensUsed: data.usage?.total_tokens ?? null,
+      promptTokens: data.usage?.prompt_tokens ?? null,
+      completionTokens: data.usage?.completion_tokens ?? null,
       prompt,
     };
   }
@@ -154,6 +158,8 @@ Reglas:
     rawResponse: JSON.stringify(simulated),
     latencyMs: null,
     tokensUsed: null,
+    promptTokens: null,
+    completionTokens: null,
     prompt,
   };
 }
@@ -263,6 +269,8 @@ export async function analyzeCandidate(
       response: aiResult.rawResponse,
       model_version: "llama-3.3-70b-versatile",
       tokens_used: aiResult.tokensUsed,
+      prompt_tokens: aiResult.promptTokens,
+      completion_tokens: aiResult.completionTokens,
       latency_ms: aiResult.latencyMs,
     });
 
