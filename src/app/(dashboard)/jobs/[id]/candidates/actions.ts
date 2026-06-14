@@ -57,7 +57,13 @@ function parseAIScore(raw: string): AIAnalysisResult {
   return obj as AIAnalysisResult;
 }
 
-async function callAIApi(cvText: string, jobDescription: string): Promise<string> {
+async function callAIApi(cvText: string, jobDescription: string): Promise<{
+  content: string;
+  rawResponse: string;
+  latencyMs: number | null;
+  tokensUsed: number | null;
+  prompt: string;
+}> {
   const prompt = `Eres un reclutador senior experto en análisis de currículums.
 
 A continuación recibirás el CV de un candidato y la descripción del puesto al que aplica.
@@ -92,6 +98,7 @@ Reglas:
   const apiKey = process.env.GROQ_API_KEY;
 
   if (apiKey) {
+    const start = Date.now();
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -112,12 +119,22 @@ Reglas:
     }
 
     const data = await response.json();
-    return data.choices[0].message.content;
+    const latencyMs = Date.now() - start;
+    return {
+      content: data.choices[0].message.content,
+      rawResponse: JSON.stringify(data),
+      latencyMs,
+      tokensUsed: data.usage?.total_tokens ?? null,
+      prompt,
+    };
   }
 
   // ── Fallback simulado para desarrollo ──
   const names = ["Silvia Méndez", "Carlos Ruiz"];
   const found = names.find((n) => cvText.includes(n));
+  if (!found) {
+    // Simulamos un "Carlos Ruiz" para tener datos consistentes
+  }
   const simulated: AIAnalysisResult = {
     summary: found
       ? `El candidato ${found} muestra una sólida trayectoria alineada con los requisitos del puesto. Su experiencia en liderazgo técnico y gestión de equipos lo posiciona como un perfil adecuado.`
@@ -132,7 +149,13 @@ Reglas:
     score: found ? 87 : 62,
     suggested_next_step: found ? "interview" : "screening",
   };
-  return JSON.stringify(simulated);
+  return {
+    content: JSON.stringify(simulated),
+    rawResponse: JSON.stringify(simulated),
+    latencyMs: null,
+    tokensUsed: null,
+    prompt,
+  };
 }
 
 async function notifyN8N(path: string, payload: Record<string, unknown>) {
@@ -196,8 +219,8 @@ export async function analyzeCandidate(
     }
 
     // ── 1. Llamar a la IA ──
-    const raw = await callAIApi(cvText, job.description ?? "");
-    const analysis = parseAIScore(raw);
+    const aiResult = await callAIApi(cvText, job.description ?? "");
+    const analysis = parseAIScore(aiResult.content);
 
     const jobTitle = job.title ?? "Vacante";
 
@@ -232,6 +255,16 @@ export async function analyzeCandidate(
     if (scoreError) {
       return { error: `Error al guardar el score: ${scoreError.message}` };
     }
+
+    // ── 4. INSERT ai_log ──
+    await supabase.from("ai_logs").insert({
+      event_type: "cv_analysis",
+      prompt: aiResult.prompt,
+      response: aiResult.rawResponse,
+      model_version: "llama-3.3-70b-versatile",
+      tokens_used: aiResult.tokensUsed,
+      latency_ms: aiResult.latencyMs,
+    });
 
     notifyN8N("candidate-created", {
       candidate_id: candidate.id,

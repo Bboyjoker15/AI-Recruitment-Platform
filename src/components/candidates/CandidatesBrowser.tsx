@@ -91,9 +91,10 @@ export function CandidatesBrowser({
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [jobFilter, setJobFilter] = useState("");
+  const [sortOption, setSortOption] = useState("recent");
 
-  const filtered = useMemo(() => {
-    return candidates.filter((c) => {
+  const sorted = useMemo(() => {
+    const filtered = candidates.filter((c) => {
       if (search) {
         const q = search.toLowerCase();
         if (
@@ -105,10 +106,30 @@ export function CandidatesBrowser({
       if (jobFilter && c.job_id !== jobFilter) return false;
       return true;
     });
-  }, [candidates, search, statusFilter, jobFilter]);
+
+    return filtered.sort((a, b) => {
+      switch (sortOption) {
+        case "score_desc": {
+          if (!a.score && !b.score) return 0;
+          if (!a.score) return 1;
+          if (!b.score) return -1;
+          return b.score.score - a.score.score;
+        }
+        case "score_asc": {
+          if (!a.score && !b.score) return 0;
+          if (!a.score) return 1;
+          if (!b.score) return -1;
+          return a.score.score - b.score.score;
+        }
+        case "name_az": return a.name.localeCompare(b.name);
+        case "name_za": return b.name.localeCompare(a.name);
+        default: return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+  }, [candidates, search, statusFilter, jobFilter, sortOption]);
 
   const hasCandidates = candidates.length > 0;
-  const hasResults = filtered.length > 0;
+  const hasResults = sorted.length > 0;
   const showStatusLabel = statusFilter && statusLabels[statusFilter];
   const showJobLabel = jobFilter && jobs.find((j) => j.id === jobFilter)?.title;
 
@@ -119,7 +140,7 @@ export function CandidatesBrowser({
         <h1 className="text-2xl font-bold text-gray-900">Candidatos</h1>
         <p className="mt-1 text-sm text-gray-500">
           {hasCandidates
-            ? `${filtered.length} de ${candidates.length} candidato${candidates.length !== 1 ? "s" : ""}`
+            ? `${sorted.length} de ${candidates.length} candidato${candidates.length !== 1 ? "s" : ""}`
             : "Aún no hay candidatos registrados"}
         </p>
       </div>
@@ -175,10 +196,22 @@ export function CandidatesBrowser({
           ))}
         </select>
 
+        <select
+          value={sortOption}
+          onChange={(e) => setSortOption(e.target.value)}
+          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
+        >
+          <option value="recent">Más recientes</option>
+          <option value="score_desc">Mejor score</option>
+          <option value="score_asc">Peor score</option>
+          <option value="name_az">Nombre A-Z</option>
+          <option value="name_za">Nombre Z-A</option>
+        </select>
+
         {(search || statusFilter || jobFilter) && (
           <button
             type="button"
-            onClick={() => { setSearch(""); setStatusFilter(""); setJobFilter(""); }}
+            onClick={() => { setSearch(""); setStatusFilter(""); setJobFilter(""); setSortOption("recent"); }}
             className="text-sm font-medium text-gray-500 transition-colors hover:text-gray-700 cursor-pointer"
           >
             Limpiar filtros
@@ -189,7 +222,7 @@ export function CandidatesBrowser({
       {/* Grid */}
       {hasResults ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((candidate) => {
+          {sorted.map((candidate) => {
             const s = candidate.score;
             const jobTitle = candidate.jobs?.title ?? "—";
             const risk = s ? riskConfig[s.risk_level] : null;
