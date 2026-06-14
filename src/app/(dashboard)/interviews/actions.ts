@@ -3,6 +3,21 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+async function notifyN8N(path: string, payload: Record<string, unknown>) {
+  const baseUrl = process.env.N8N_WEBHOOK_BASE_URL;
+  if (!baseUrl) return;
+  try {
+    await fetch(`${baseUrl}/webhook/${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(5000),
+    });
+  } catch {
+    // fire-and-forget
+  }
+}
+
 export type ScheduleInterviewState = {
   error?: string;
   success?: boolean;
@@ -28,6 +43,12 @@ export async function scheduleInterview(
     if (!session) {
       return { error: "No hay sesión activa. Inicia sesión nuevamente." };
     }
+
+    const { data: candidate } = await supabase
+      .from("candidates")
+      .select("name, email, jobs(title)")
+      .eq("id", candidateId)
+      .single();
 
     const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -62,6 +83,18 @@ export async function scheduleInterview(
       }
       return { error: errorMessage };
     }
+
+    notifyN8N("interview-scheduled", {
+      candidate_id: candidateId,
+      candidate_name: candidate?.name ?? "",
+      candidate_email: candidate?.email ?? "",
+      job_title: ((candidate?.jobs as unknown as { title: string } | null)?.title) ?? "",
+      interview_date: interviewDate,
+      status: status || "scheduled",
+      notes: notes || null,
+      event: "interview_scheduled",
+      timestamp: new Date().toISOString(),
+    });
 
     revalidatePath("/interviews");
     return { success: true };

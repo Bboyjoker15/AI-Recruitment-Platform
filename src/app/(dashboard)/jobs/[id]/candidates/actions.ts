@@ -135,6 +135,31 @@ Reglas:
   return JSON.stringify(simulated);
 }
 
+async function notifyN8N(path: string, payload: Record<string, unknown>) {
+  const baseUrl = process.env.N8N_WEBHOOK_BASE_URL;
+  if (!baseUrl) return;
+  try {
+    await fetch(`${baseUrl}/webhook/${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(5000),
+    });
+  } catch {
+    // Fire-and-forget — no bloquear al usuario si n8n falla
+  }
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  new: "Nuevo",
+  screening: "En revisión",
+  interview: "Entrevista",
+  technical_test: "Prueba técnica",
+  offer: "Oferta",
+  hired: "Contratado",
+  rejected: "Rechazado",
+};
+
 export async function analyzeCandidate(
   _prevState: { error?: string; success?: boolean },
   formData: FormData
@@ -162,7 +187,7 @@ export async function analyzeCandidate(
     // ── Obtener descripción del puesto ──
     const { data: job, error: jobError } = await supabase
       .from("jobs")
-      .select("description")
+      .select("title, description")
       .eq("id", jobId)
       .single();
 
@@ -173,6 +198,8 @@ export async function analyzeCandidate(
     // ── 1. Llamar a la IA ──
     const raw = await callAIApi(cvText, job.description ?? "");
     const analysis = parseAIScore(raw);
+
+    const jobTitle = job.title ?? "Vacante";
 
     // ── 2. INSERT candidate ──
     const { data: candidate, error: candError } = await supabase
@@ -206,6 +233,18 @@ export async function analyzeCandidate(
       return { error: `Error al guardar el score: ${scoreError.message}` };
     }
 
+    notifyN8N("candidate-created", {
+      candidate_id: candidate.id,
+      candidate_name: name,
+      candidate_email: email,
+      job_title: jobTitle,
+      score: analysis.score,
+      classification: analysis.classification,
+      risk_level: analysis.risk_level,
+      event: "candidate_created",
+      timestamp: new Date().toISOString(),
+    });
+
     revalidatePath(`/jobs/${jobId}`);
     return { success: true, candidateId: candidate.id };
   } catch (err) {
@@ -226,32 +265,33 @@ export async function updateCandidateStage(
       return { error: "No hay sesión activa." };
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    // Obtener datos del candidato antes de actualizar
+    const { data: candidate } = await supabase
+      .from("candidates")
+      .select("name, email, jobs(title)")
+      .eq("id", candidateId)
+      .single();
 
-    const response = await fetch(`${baseUrl}/rest/v1/rpc/update_candidate_stage`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: anonKey,
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({
-        p_candidate_id: candidateId,
-        p_new_status: newStatus,
-      }),
-    });
+    const { error: updateError } = await supabase
+      .from("candidates")
+      .update({ status: newStatus })
+      .eq("id", candidateId);
 
-    if (!response.ok) {
-      let errorMessage = `Error del servidor (${response.status})`;
-      try {
-        const errorBody = await response.json();
-        if (errorBody.message) errorMessage = errorBody.message;
-      } catch {
-        errorMessage = await response.text();
-      }
-      return { error: errorMessage };
+    if (updateError) {
+      return { error: updateError.message };
     }
+
+    // Notificar a n8n (desde Server Action, no desde RPC)
+    notifyN8N("candidate-stage", {
+      candidate_id: candidateId,
+      candidate_name: candidate?.name ?? "",
+      candidate_email: candidate?.email ?? "",
+      job_title: ((candidate?.jobs as unknown as { title: string } | null)?.title) ?? "",
+      new_status: newStatus,
+      new_status_label: STATUS_LABELS[newStatus] ?? newStatus,
+      event: "stage_changed",
+      timestamp: new Date().toISOString(),
+    });
 
     revalidatePath(`/candidates/${candidateId}`);
     return { success: true };

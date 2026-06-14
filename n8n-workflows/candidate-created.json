@@ -1,0 +1,121 @@
+{
+  "name": "Candidate Created",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "candidate-created",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer re_Piz7ms7j_Ljkab7a82TtUcKi9afSvhTbe"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "from",
+              "value": "onboarding@ai-recruitment.com"
+            },
+            {
+              "name": "to",
+              "value": "={{ $json.candidate_email }}"
+            },
+            {
+              "name": "subject",
+              "value": "={{ 'Postulación recibida - ' + $json.job_title }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ `Hola ${$json.candidate_name},\n\nHemos recibido tu postulación para la vacante de ${$json.job_title}.\n\nNuestro equipo de reclutamiento revisará tu perfil y te mantendremos informado sobre el avance de tu candidatura.\n\nPuntaje obtenido: ${$json.score}/100\nClasificación: ${$json.classification}\n\nGracias por tu interés.\n\nSaludos,\nEquipo de Reclutamiento` }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http_candidate_email",
+      "name": "HTTP Request - Email candidato",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer re_Piz7ms7j_Ljkab7a82TtUcKi9afSvhTbe"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "from",
+              "value": "notificaciones@ai-recruitment.com"
+            },
+            {
+              "name": "to",
+              "value": "reclutador@empresa.com"
+            },
+            {
+              "name": "subject",
+              "value": "={{ 'Nuevo candidato: ' + $json.candidate_name + ' - ' + $json.job_title }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ `Se ha recibido una nueva postulación.\n\nCandidato: ${$json.candidate_name}\nEmail: ${$json.candidate_email}\nVacante: ${$json.job_title}\nPuntaje IA: ${$json.score}/100\nClasificación: ${$json.classification}\nRiesgo: ${$json.risk_level}\n\nRevisa los detalles en la plataforma.` }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http_recruiter_email",
+      "name": "HTTP Request - Email reclutador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 450]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Email candidato",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request - Email reclutador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

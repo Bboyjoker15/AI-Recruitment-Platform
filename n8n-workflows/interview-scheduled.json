@@ -1,0 +1,121 @@
+{
+  "name": "Interview Scheduled",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "interview-scheduled",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer re_Piz7ms7j_Ljkab7a82TtUcKi9afSvhTbe"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "from",
+              "value": "entrevistas@ai-recruitment.com"
+            },
+            {
+              "name": "to",
+              "value": "={{ $json.candidate_email }}"
+            },
+            {
+              "name": "subject",
+              "value": "={{ 'Entrevista agendada - ' + $json.job_title }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ `Hola ${$json.candidate_name},\n\nTu entrevista para ${$json.job_title} ha sido agendada.\n\nFecha: ${new Date($json.interview_date).toLocaleString('es-ES')}\n\nPor favor confirma tu asistencia respondiendo a este correo.\n\nSaludos,\nEquipo de Reclutamiento` }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http_candidate_email",
+      "name": "HTTP Request - Email candidato",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer re_Piz7ms7j_Ljkab7a82TtUcKi9afSvhTbe"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "from",
+              "value": "notificaciones@ai-recruitment.com"
+            },
+            {
+              "name": "to",
+              "value": "reclutador@empresa.com"
+            },
+            {
+              "name": "subject",
+              "value": "={{ 'Entrevista agendada: ' + $json.candidate_name + ' - ' + $json.job_title }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ `Se ha agendado una entrevista.\n\nCandidato: ${$json.candidate_name}\nEmail: ${$json.candidate_email}\nVacante: ${$json.job_title}\nFecha: ${new Date($json.interview_date).toLocaleString('es-ES')}\nNotas: ${$json.notes || 'Sin notas'}\n\nRevisa los detalles en la plataforma.` }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http_recruiter_email",
+      "name": "HTTP Request - Email reclutador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 450]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Email candidato",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request - Email reclutador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
