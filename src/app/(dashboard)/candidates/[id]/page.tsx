@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { BackButton } from "@/components/shared/ui/BackButton";
 import { CVAnalysis } from "@/components/candidates/CVAnalysis";
 import { StageControls } from "@/components/candidates/StageControls";
 import { CandidateActions } from "@/components/candidates/CandidateActions";
@@ -51,16 +52,10 @@ export default async function CandidateDetailPage({
 
   return (
     <div className="mx-auto max-w-3xl">
-      {/* Back link */}
-      <Link
+      <BackButton
         href={`/jobs/${(candidate.jobs as { id: string })?.id}`}
-        className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-gray-700"
-      >
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-        </svg>
-        Volver a la vacante
-      </Link>
+        label="Volver a la vacante"
+      />
 
       {/* Candidate header */}
       <div className="mb-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">

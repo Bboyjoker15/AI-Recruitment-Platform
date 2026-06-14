@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/components/shared/utils/cn";
+import { BackButton } from "@/components/shared/ui/BackButton";
 
 type Mode = "signin" | "signup";
 
@@ -68,16 +69,21 @@ export default function LoginPage() {
   if (success) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50 px-4">
-        <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-lg">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
-            <svg className="h-7 w-7 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-            </svg>
+        <div className="w-full max-w-sm">
+          <div className="mb-4">
+            <BackButton href="/" label="Volver al inicio" />
           </div>
-          <h2 className="mb-2 text-xl font-semibold text-gray-900">Check your email</h2>
-          <p className="text-sm text-gray-500">
-            We sent a confirmation link to <strong className="text-gray-700">{email}</strong>
-          </p>
+          <div className="w-full rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-lg">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
+              <svg className="h-7 w-7 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            </div>
+            <h2 className="mb-2 text-xl font-semibold text-gray-900">Check your email</h2>
+            <p className="text-sm text-gray-500">
+              We sent a confirmation link to <strong className="text-gray-700">{email}</strong>
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -86,6 +92,9 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50 px-4">
       <div className="w-full max-w-sm">
+        <div className="mb-4">
+          <BackButton href="/" label="Volver al inicio" />
+        </div>
         <div className="mb-8 text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary shadow-sm">
             <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">

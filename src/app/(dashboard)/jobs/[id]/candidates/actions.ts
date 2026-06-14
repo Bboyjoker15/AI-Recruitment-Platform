@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 type AIAnalysisResult = {
@@ -262,17 +263,21 @@ export async function analyzeCandidate(
       return { error: `Error al guardar el score: ${scoreError.message}` };
     }
 
-    // ── 4. INSERT ai_log ──
-    await supabase.from("ai_logs").insert({
-      event_type: "cv_analysis",
-      prompt: aiResult.prompt,
-      response: aiResult.rawResponse,
-      model_version: "llama-3.3-70b-versatile",
-      tokens_used: aiResult.tokensUsed,
-      prompt_tokens: aiResult.promptTokens,
-      completion_tokens: aiResult.completionTokens,
-      latency_ms: aiResult.latencyMs,
+    // ── 4. INSERT ai_log via RPC (bypass PostgREST schema cache) ──
+    const admin = createAdminClient();
+    const { error: aiError } = await admin.rpc("insert_ai_log", {
+      p_event_type: "cv_analysis",
+      p_prompt: aiResult.prompt,
+      p_response: aiResult.rawResponse,
+      p_model_version: "llama-3.3-70b-versatile",
+      p_tokens_used: aiResult.tokensUsed,
+      p_prompt_tokens: aiResult.promptTokens,
+      p_completion_tokens: aiResult.completionTokens,
+      p_latency_ms: aiResult.latencyMs,
     });
+    if (aiError) {
+      console.error("ai_logs insert error:", aiError);
+    }
 
     notifyN8N("candidate-created", {
       candidate_id: candidate.id,
@@ -287,6 +292,7 @@ export async function analyzeCandidate(
     });
 
     revalidatePath(`/jobs/${jobId}`);
+    revalidatePath("/tokens");
     return { success: true, candidateId: candidate.id };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error inesperado al procesar el candidato.";

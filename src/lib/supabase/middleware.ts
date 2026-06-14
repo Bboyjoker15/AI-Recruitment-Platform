@@ -34,10 +34,11 @@ export async function updateSession(request: NextRequest) {
   const isDashboard = pathname.startsWith("/dashboard") ||
     pathname.startsWith("/jobs") ||
     pathname.startsWith("/candidates") ||
-    pathname.startsWith("/interviews");
+    pathname.startsWith("/interviews") ||
+    pathname.startsWith("/tokens");
   const isRoot = pathname === "/";
 
-  if (!user && (isDashboard || isRoot)) {
+  if (!user && isDashboard) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
@@ -45,7 +46,7 @@ export async function updateSession(request: NextRequest) {
 
   if (user && (isAuthPage || isRoot)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/jobs";
+    url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 

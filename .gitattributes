@@ -1,0 +1,5 @@
+# Auto detect text files and handle line endings
+* text=auto
+
+# Husky hooks must always be LF (Unix) so sh can execute them
+.husky/** text eol=lf

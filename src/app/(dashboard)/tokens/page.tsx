@@ -1,8 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/types/database";
 import { UsageCards } from "@/components/tokens/UsageCards";
 import { UsageChart } from "@/components/tokens/UsageChart";
 import { UsageTable } from "@/components/tokens/UsageTable";
+
+export const dynamic = "force-dynamic";
 
 type AiLog = Database["public"]["Tables"]["ai_logs"]["Row"];
 
@@ -59,13 +62,13 @@ function calcCost(logs: AiLog[]): number {
 export default async function TokensPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const recruiterId = user?.id;
 
-  if (!recruiterId) {
+  if (!user) {
     return <div className="py-12 text-center text-gray-500">Inicia sesi&oacute;n para ver el uso de tokens.</div>;
   }
 
-  const { data: logs } = await supabase
+  const admin = createAdminClient();
+  const { data: logs } = await admin
     .from("ai_logs")
     .select("*")
     .order("created_at", { ascending: false })
