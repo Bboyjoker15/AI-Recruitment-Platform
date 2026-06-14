@@ -83,6 +83,15 @@ export default async function TokensPage() {
       ? Math.round(allLogs.reduce((s, l) => s + (l.latency_ms ?? 0), 0) / totalCalls)
       : 0;
   const totalCost = calcCost(allLogs);
+
+  const cvAnalyses = allLogs.filter((l) => l.event_type === "cv_analysis");
+  const totalCvs = cvAnalyses.length;
+  const timeSavedHours = Math.round(totalCvs * 20 / 60 * 10) / 10;
+  const successRate =
+    totalCvs > 0
+      ? Math.round((cvAnalyses.filter((l) => (l.tokens_used ?? 0) > 0).length / totalCvs) * 100)
+      : 100;
+
   const dayBuckets = buildDayBuckets(allLogs);
   const recentLogs = allLogs.slice(0, 20);
 
@@ -94,6 +103,9 @@ export default async function TokensPage() {
         totalCost={totalCost}
         totalCalls={totalCalls}
         avgLatencyMs={avgLatencyMs}
+        totalCvs={totalCvs}
+        timeSavedHours={timeSavedHours}
+        successRate={successRate}
       />
       <UsageChart dayBuckets={dayBuckets} />
       <UsageTable logs={recentLogs} />
